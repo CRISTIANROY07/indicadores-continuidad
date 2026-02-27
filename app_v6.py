@@ -260,32 +260,24 @@ with st.sidebar.form("params_form"):
 # ════════════════════════════════════════════════════════════
 import platform
 import subprocess
+import platform
+import subprocess
 
 @st.cache_data(show_spinner=False)
 def leer_mdb(file_bytes: bytes, tabla: str):
-    """
-    Lee una tabla de un archivo .mdb de forma multiplataforma:
-    - Windows  -> pyodbc con Microsoft Access Driver
-    - Linux    -> mdbtools (mdb-export), instalado via packages.txt
-    """
     with tempfile.NamedTemporaryFile(delete=False, suffix='.mdb') as tmp:
         tmp.write(file_bytes)
         path = tmp.name
-
     try:
         sistema = platform.system()
-
         if sistema == "Windows":
-            # ── Driver ODBC de Microsoft Access (solo Windows) ────────────
             conn = pyodbc.connect(
                 r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=' + path + ';'
             )
             df = pd.read_sql(f'SELECT * FROM {tabla}', conn)
             conn.close()
             return df
-
         else:
-            # ── mdbtools en Linux / Streamlit Cloud ───────────────────────
             resultado = subprocess.run(
                 ['mdb-export', path, tabla],
                 capture_output=True,
@@ -305,16 +297,15 @@ def leer_mdb(file_bytes: bytes, tabla: str):
                 return None
             df = pd.read_csv(io.StringIO(resultado.stdout), low_memory=False)
             return df
-
     except FileNotFoundError:
         st.error(
-            "⚠️ **mdbtools no está instalado en el servidor.**\n\n"
-            "Asegúrese de que el archivo `packages.txt` en su repositorio "
-            "de GitHub contenga:\n```\nunixodbc\nunixodbc-dev\nmdbtools\n```"
+            "mdbtools no está instalado en el servidor.\n\n"
+            "Asegúrese de que el archivo packages.txt en su repositorio "
+            "de GitHub contenga:\nunixodbc\nunixodbc-dev\nmdbtools"
         )
         return None
     except subprocess.TimeoutExpired:
-        st.error(f"Tiempo de espera agotado leyendo {tabla}. Pruebe con un archivo más pequeño.")
+        st.error(f"Tiempo de espera agotado leyendo {tabla}.")
         return None
     except Exception as e:
         st.error(f"Error leyendo {tabla}: {e}")
@@ -322,6 +313,7 @@ def leer_mdb(file_bytes: bytes, tabla: str):
     finally:
         if os.path.exists(path):
             os.remove(path)
+
 
 
 @st.cache_data(show_spinner=False)
