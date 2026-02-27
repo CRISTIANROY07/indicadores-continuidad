@@ -258,21 +258,70 @@ with st.sidebar.form("params_form"):
 # ════════════════════════════════════════════════════════════
 # PROCESAMIENTO CACHEADO Y VECTORIZADO
 # ════════════════════════════════════════════════════════════
+import platform
+import subprocess
+
 @st.cache_data(show_spinner=False)
 def leer_mdb(file_bytes: bytes, tabla: str):
+    """
+    Lee una tabla de un archivo .mdb de forma multiplataforma:
+    - Windows  -> pyodbc con Microsoft Access Driver
+    - Linux    -> mdbtools (mdb-export), instalado via packages.txt
+    """
     with tempfile.NamedTemporaryFile(delete=False, suffix='.mdb') as tmp:
         tmp.write(file_bytes)
         path = tmp.name
+
     try:
-        conn = pyodbc.connect(r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=' + path + ';')
-        df   = pd.read_sql(f'SELECT * FROM {tabla}', conn)
-        conn.close()
-        return df
+        sistema = platform.system()
+
+        if sistema == "Windows":
+            # ── Driver ODBC de Microsoft Access (solo Windows) ────────────
+            conn = pyodbc.connect(
+                r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=' + path + ';'
+            )
+            df = pd.read_sql(f'SELECT * FROM {tabla}', conn)
+            conn.close()
+            return df
+
+        else:
+            # ── mdbtools en Linux / Streamlit Cloud ───────────────────────
+            resultado = subprocess.run(
+                ['mdb-export', path, tabla],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if resultado.returncode != 0:
+                st.error(
+                    f"Error leyendo tabla **{tabla}** con mdbtools.\n\n"
+                    f"Detalle: `{resultado.stderr.strip()}`\n\n"
+                    "Verifique que el archivo .mdb no esté dañado y que la tabla "
+                    f"`{tabla}` exista dentro del archivo."
+                )
+                return None
+            if not resultado.stdout.strip():
+                st.error(f"La tabla **{tabla}** aparece vacía o no existe en el archivo .mdb.")
+                return None
+            df = pd.read_csv(io.StringIO(resultado.stdout), low_memory=False)
+            return df
+
+    except FileNotFoundError:
+        st.error(
+            "⚠️ **mdbtools no está instalado en el servidor.**\n\n"
+            "Asegúrese de que el archivo `packages.txt` en su repositorio "
+            "de GitHub contenga:\n```\nunixodbc\nunixodbc-dev\nmdbtools\n```"
+        )
+        return None
+    except subprocess.TimeoutExpired:
+        st.error(f"Tiempo de espera agotado leyendo {tabla}. Pruebe con un archivo más pequeño.")
+        return None
     except Exception as e:
         st.error(f"Error leyendo {tabla}: {e}")
         return None
     finally:
-        if os.path.exists(path): os.remove(path)
+        if os.path.exists(path):
+            os.remove(path)
 
 
 @st.cache_data(show_spinner=False)
