@@ -1,0 +1,48 @@
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Entornos virtuales
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de datos sensibles (NO subir bases de datos con info real)
+*.mdb
+*.accdb
+*.xlsx
+*.xls
+*.csv
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
