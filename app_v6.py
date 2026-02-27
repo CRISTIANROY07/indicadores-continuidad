@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 # ════════════════════════════════════════════════════════════
 st.set_page_config(page_title="Indicadores de Continuidad", layout="wide", page_icon="⚡")
 
-USUARIOS     = {"crollano": "admin123", "ingeniero1": "clave1", "operaciones": "operaciones2026"}
+USUARIOS     = {"crollano": "admin123", "jevargas": "admin123", "dromero": "admin123", "jcamacho": "admin123"}
 CAUSAS_PROG  = {'20', '21', '22', '23', '24'}
 MAPA_ORIGEN  = {
     '01': 'SUBTRANSMISIÓN', '02': 'DIST. PRIMARIA', '03': 'DIST. SECUNDARIA',
