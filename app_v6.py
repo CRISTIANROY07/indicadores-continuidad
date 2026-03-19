@@ -5,7 +5,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import pyodbc
+try:
+    import pyodbc
+except ImportError:
+    pyodbc = None
 import tempfile, os, io, platform, subprocess, json, pickle, gzip
 from datetime import datetime
 import plotly.graph_objects as go
